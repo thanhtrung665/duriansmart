@@ -1,57 +1,82 @@
 # ============================================================
 # PATH: app/api/farmer.py
 # ============================================================
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from app.schemas.durian_schemas import FarmerInputSchema
-from app.services.kaggle_client import KaggleAIClient
-import json
+import os
+import shutil
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+from app.db.repository import BatchRepository
+from app.schemas.rbac_schemas import DurianBatchDocument, FarmerInfo, DailyLogItem
+from app.services.ai_oracle import ai_engine
 
-router = APIRouter()
-kaggle_client = KaggleAIClient()
+router = APIRouter(prefix="/farmer", tags=["Nông Dân"])
 
-@router.post("/submit-log")
-async def submit_cultivation_log(
-    payload: str = Form(..., description="Chuỗi JSON của FarmerInputSchema"),
-    audio_file: UploadFile = File(..., description="File ghi âm nhật ký (.m4a/.wav)")
+# Dependency Injection cho Repository
+def get_repo():
+    return BatchRepository()
+
+@router.post("/init-batch")
+async def init_durian_batch(
+    batch_id: str = Form(...),
+    farmer_id: str = Form(...),
+    farmer_name: str = Form(...),
+    farm_code_puc: str = Form(...),
+    durian_variety: str = Form(...),
+    repo: BatchRepository = Depends(get_repo)
 ):
-    try:
-        # Giải mã và xác thực cấu trúc dữ liệu thô nhận tử Zalo App
-        try:
-            data_dict = json.payloads(payload)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=400, detail="Trường payload không phải là chuỗi JSON hợp lệ")
-        
-        validated_data = FarmerInputSchema(**data_dict)
-        
-        # Bước 2: Tạm lập giả định (Mock) luồng đẩy sang Kaggle (Sẽ code ở Phần 4 & 5)
-        print(f"Đã nhận file audio: {audio_file.filename} từ vùng trồng: {validated_data.puc_code}")
-        # Đọc dữ liệu nhị phân của file âm thanh bất đồng bộ 
-        audio_bytes = await audio_file.read()
-        if not audio_bytes:
-            raise HTTPException(status_code=400, detail="File âm thanh rỗng hoặc bị lỗi")
-        
-        # Đẩy file lên Kaggle xử lý
-        ai_response = await kaggle_client.forward_audio_to_oracle(
-            file_bytes=audio_bytes,
-            file_name=audio_file.filename
+    """[Ngày 1] Khởi tạo vùng trồng và bắt đầu vụ mùa mới"""
+    new_batch = DurianBatchDocument(
+        batch_id=batch_id,
+        farmer_id=farmer_id,
+        farmer_profile=FarmerInfo(
+            farmer_name=farmer_name,
+            farmer_age=45, # Tạm fix, có thể truyền từ Form
+            farm_code_puc=farm_code_puc,
+            gps_location={"lat": 10.7626, "long": 106.6601},
+            farm_area_m2=5000.0,
+            durian_variety=durian_variety
         )
-        # Kiểm tra lỗi AI Oracle Kaggle 
-        if "error" in ai_response:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Lỗi xử lý tại AI Oracle (Kaggle): {ai_response['error']}. Chi tiết: {ai_response.get('detail', '')}"
-            )
-        # Trích xuất kết quả phân tích bồi đắp vào Schema để làm giàu dữ liệu
-        validated_data.raw_text_extracted = ai_response.get("raw_text_extracted")
-        validated_data.ai_oracle_compliant = ai_response.get("ai_oracle_compliant")
+    )
+    
+    saved_id = await repo.create_new_batch(new_batch)
+    return {"status": "success", "message": "Đã khởi tạo lô hàng", "batch_id": saved_id}
+
+@router.post("/{batch_id}/upload-voice-log")
+async def submit_voice_log(
+    batch_id: str,
+    day_number: int = Form(...),
+    audio_file: UploadFile = File(...),
+    repo: BatchRepository = Depends(get_repo)
+):
+    """[Ngày 2 -> 120] Thu âm báo cáo hàng ngày"""
+    # 1. Lưu file âm thanh tạm thời ra ổ cứng
+    temp_file_path = f"temp_{audio_file.filename}"
+    with open(temp_file_path, "wb") as buffer:
+        shutil.copyfileobj(audio_file.file, buffer)
         
-        # Phản hồi cấu trúc dữ liệu Standard JSON hoàn chỉnh về 
-        return {
-            "status": "success",
-            "message": "AI Oracle đã đối soát xong nhật ký thực địa vùng trồng",
-            "blockchain_ready_data": validated_data.model_dump()
-        }
-    except HTTPException as http_err:
-        raise http_err
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi xử lý hệ thống chặng Backend: {str(e)}")
+    try:
+        # 2. Đưa vào GPU (Whisper) để bóc băng tốc độ cao
+        transcribed_text = ai_engine.transcribe_audio(temp_file_path)
+        
+        # 3. AI đối soát chuẩn GACC
+        ai_status = ai_engine.analyze_log_content(transcribed_text)
+        
+        # 4. Đóng gói thành DailyLogItem và lưu vào mảng Database
+        log_item = DailyLogItem(
+            day_number=day_number,
+            voice_log_text=transcribed_text,
+            ai_analysis_status=ai_status
+        )
+        new_hash = await repo.append_daily_log(batch_id, log_item)
+        
+    finally:
+        # 5. Dọn dẹp file rác để tránh đầy bộ nhớ Server
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+
+    return {
+        "status": "success", 
+        "day": day_number,
+        "recognized_text": transcribed_text,
+        "ai_evaluation": ai_status,
+        "current_farmer_hash": new_hash
+    }

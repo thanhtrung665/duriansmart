@@ -1,23 +1,10 @@
+# ============================================================
+# PATH: app/main.py
+# ============================================================
 from fastapi import FastAPI
-from app.api import farmer, lab, enterprise
 from contextlib import asynccontextmanager
 from app.db.database import connect_to_mongo, close_mongo_connection
-
-# Khởi tạo ứng dụng FasstAPI với Metadata chuẩn chỉnh
-app = FastAPI(
-    title="Durian Smart MVP",
-    description="Hệ thống Durian Smart - Truy xuất nguồn gốc minh bạch sầu riêng cho người Việt",
-    version="1.0.0"
-)
-
-# Đăng ký các Router phân quyền
-app.include_router(farmer.router, prefix="/api/v1/farmer", tags=["Phân hệ Nông dân (Zalo Mini App)"])
-app.include_router(enterprise.router, prefix="/api/v1/enterprise", tags=["Phân hệ Doanh nghiệp XNK"])
-app.include_router(lab.router, prefix="/api/v1/lab", tags=["Phân hệ phòng Lab"])
-
-@app.get("/")
-async def root_health_check():
-    return {"status": "success", "message": "Durian Smart is running Smoothly!"}
+from app.api import farmer
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -27,4 +14,16 @@ async def lifespan(app: FastAPI):
     # Tắt cùng FastAPI
     await close_mongo_connection()
 
-app = FastAPI(title="Durian Smart Core", lifespan=lifespan)
+app = FastAPI(
+    title="Durian Smart Core Enterprise", 
+    description="Hệ thống lõi Traceability Đa chữ ký",
+    version="2.0",
+    lifespan=lifespan
+)
+
+# Nhúng Router của Nông dân vào hệ thống
+app.include_router(farmer.router)
+
+@app.get("/")
+def read_root():
+    return {"message": "Durian Smart Core đang hoạt động trên GPU Server!"}
