@@ -133,4 +133,4 @@ class BatchRepository:
         record = await self.collection.find_one({"batch_id": batch_id}, {"_id": 0})
         if not record:
             raise HTTPException(status_code=404, detail="Không tìm thấy mã QR sầu riêng này trên hệ thống!")
-        return recor
+        return record

@@ -1,20 +1,26 @@
-# Lõi FastAPI & Server
-fastapi[all]==0.111.0
-uvicorn==0.30.1
-pydantic==2.7.4
+# 1. Backend Core & Server
+fastapi==0.111.0
+uvicorn==0.29.0
+python-multipart==0.0.9
 
-# Database
+# 2. Database (MongoDB)
 motor==3.4.0
+pydantic==2.7.1
 
-# AI Oracle (Whisper)
-openai-whisper==20231117
-torch==2.3.1
-torchaudio==2.3.1
+# 3. AI Oracle (Whisper)
+# openai-whisper==20231117
+# torch==2.3.0
+# torchaudio==2.3.0
 
-# Blockchain & Cardano
+# 4. Blockchain & Smart Contract
 pycardano==0.11.1
-blockfrost-python==0.5.3
+blockfrost-python==0.5.4
+setuptools==69.5.1  # Fix lỗi pkg_resources cho pycardano
 
-# Frontend
-streamlit==1.35.0
-requests==2.32.3
+# 5. Frontend & Giao diện trình diễn
+streamlit==1.34.0
+audio-recorder-streamlit==0.0.10
+requests==2.31.0
+
+# 6. Biến môi trường
+python-dotenv==1.0.1
