@@ -30,8 +30,8 @@ def get_base64_of_bin_file(bin_file):
         return ""
 
 LOGO_LINK = get_base64_of_bin_file("frontend/images/logo_durian_smart.png")
-AVATAR_LINK = get_base64_of_bin_file("frontend/images/70.jpg")
-NEWS_BG_IMAGE = get_base64_of_bin_file("frontend/images/Screenshot 2026-05-25 185450.png")
+AVATAR_LINK = get_base64_of_bin_file("frontend/images/farmer.jpg")
+NEWS_BG_IMAGE = get_base64_of_bin_file("frontend/images/tintuc.jpg")
 # ==========================================
 
 # 2. HỆ THỐNG CSS CUSTOM TOÀN DIỆN

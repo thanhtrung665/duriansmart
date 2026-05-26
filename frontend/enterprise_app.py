@@ -26,8 +26,8 @@ def get_base64_of_bin_file(bin_file):
     except FileNotFoundError: return ""
 
 LOGO_LINK = get_base64_of_bin_file("frontend/images/logo_durian_smart.png")
-AVATAR_LINK = get_base64_of_bin_file("frontend/images/70.jpg")
-BG_IMAGE = get_base64_of_bin_file("frontend/images/Screenshot 2026-05-25 185450.png")
+AVATAR_LINK = get_base64_of_bin_file("frontend/images/enterprise.jpg")
+BG_IMAGE = get_base64_of_bin_file("frontend/images/tintuc.jpg")
 
 # Database Ảo (Mock State) để hiển thị UI
 if "batches_data" not in st.session_state:
