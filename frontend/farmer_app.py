@@ -10,7 +10,7 @@ import requests
 from streamlit_mic_recorder import mic_recorder
 
 # Địa chỉ API Backend
-API_BASE_URL = "http://localhost:8000"
+API_BASE_URL = "https://durian-smart-backend.onrender.com"
 
 # 1. CẤU HÌNH TRANG CƠ BẢN
 st.set_page_config(page_title="Durian Smart | ThanhTrung", page_icon="🍈", layout="wide")

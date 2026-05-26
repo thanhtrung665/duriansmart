@@ -6,7 +6,7 @@ import streamlit as st
 import base64
 import requests
 
-API_BASE_URL = "http://localhost:8000"
+API_BASE_URL = "https://durian-smart-backend.onrender.com"
 
 st.set_page_config(
     page_title="Xác thực | Durian Smart", 

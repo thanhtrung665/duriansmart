@@ -9,7 +9,7 @@ import time
 import requests
 
 # Địa chỉ Máy chủ Backend FastAPI
-API_BASE_URL = "http://localhost:8000"
+API_BASE_URL = "https://durian-smart-backend.onrender.com"
 
 st.set_page_config(page_title="Durian Smart | Lab", layout="wide")
 
