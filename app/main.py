@@ -11,6 +11,10 @@ from app.db.database import connect_to_mongo, close_mongo_connection
 
 # Nạp trọn bộ 4 Router (Microservices) của hệ thống
 from app.api import farmer, enterprise, lab, public
+from app.api import lab
+
+# Đăng ký router cho Cơ quan kiểm định
+app.include_router(lab.router)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

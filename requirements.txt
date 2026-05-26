@@ -6,10 +6,10 @@ python-multipart==0.0.9
 # 2. Database (MongoDB)
 motor==3.4.0
 pydantic==2.7.1
-pip install pymongo==4.6.3
+pymongo==4.6.3
 
 # 3. AI Oracle (Whisper)
-# openai-whisper==20231117
+openai-whisper
 torch==2.3.0
 torchaudio==2.3.0
 
@@ -25,3 +25,5 @@ requests==2.31.0
 
 # 6. Biến môi trường
 python-dotenv==1.0.1
+certifi
+streamlit_mic_recorder
