@@ -1,74 +1,67 @@
 # ============================================================
-# PATH: frontend/verify_app.py - DURIAN SMART VERIFIER
+# PATH: frontend/verify_app.py
+# DURIAN SMART - PUBLIC QR VERIFICATION MODULE (WITH PRODUCT IMAGE)
 # ============================================================
 import streamlit as st
-import time
 
-st.set_page_config(page_title="Durian Smart | Verify", page_icon="🔍", layout="wide")
+st.set_page_config(page_title="Durian Smart | Xác thực", page_icon="🔍", layout="centered")
 
-# Mock Database (Dữ liệu giả lập)
-MOCK_DB = {
+# --- MOCK DATABASE (Cập nhật thêm image_url) ---
+MOCK_DATABASE = {
     "BATCH-001": {
-        "status": "Đã kiểm định",
-        "origin": "Vùng trồng Đắk Lắk (PUC-01)",
-        "lab": "Phòng Lab GACC HCM",
-        "result": "Đạt chuẩn xuất khẩu",
-        "hash": "0x8a8634798b53a480ec9d2bf22b736cc32b2af23ef2c6a8cea02f603ab7946781",
-        "timestamp": "2026-05-27 09:30:15"
-    },
-    "BATCH-004": {
-        "status": "Đã kiểm định",
-        "origin": "Vùng trồng Tiền Giang (PUC-02)",
-        "lab": "Phòng Lab GACC HCM",
-        "result": "CẢNH BÁO: Không đạt chuẩn",
-        "hash": "0xdf6607e75ea144116f977f524d6ccaf3fc9c60be28e679c482bd5286291149cb",
-        "timestamp": "2026-05-26 14:15:00"
+        "image_url": "frontend/images/durian.jpg", # Link ảnh demo
+        "farmer": {"name": "Nguyễn Văn A", "puc": "PUC-01", "farm": "Vườn sầu riêng Ri6 - Đắk Lắk", "date": "2026-05-15"},
+        "enterprise": {"name": "CTY XNK X", "factory": "F-001", "date": "2026-05-20", "method": "Đóng gói chân không"},
+        "lab": {"lab_name": "Phòng Lab GACC HCM", "date": "2026-05-25", "cadimi": "0.02 mg/kg", "result": "Đạt"},
+        "blockchain": {"id": "0x8a8634798b53a480ec9d2bf22b736cc32b2af23ef2c6a8cea02f603ab7946781", "hash": "0xdf6607e75ea144116f977f524d6ccaf3fc9c60be28e679c482bd5286291149cb"}
     }
 }
 
-# CSS Dark Mode Web3
+# --- CSS STYLING ---
 st.markdown("""
 <style>
-    .stApp { background-color: #0B1120; color: white; }
-    .search-box { padding: 40px; text-align: center; }
-    .result-card { background: #1E293B; border: 1px solid #334155; border-radius: 16px; padding: 30px; margin-top: 20px; animation: fadeIn 0.5s; }
-    .badge-success { background: #064E3B; color: #34D399; padding: 5px 10px; border-radius: 4px; font-weight: bold; }
-    .badge-danger { background: #7F1D1D; color: #F87171; padding: 5px 10px; border-radius: 4px; font-weight: bold; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .stApp { background-color: #F8FAFC; }
+    .header-box { text-align: center; padding: 20px; background: white; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .status-card { background: #16A34A; color: white; padding: 15px; border-radius: 12px; text-align: center; font-weight: 800; margin-bottom: 20px; }
+    .info-section { background: white; padding: 15px; border-radius: 12px; border-left: 5px solid #16A34A; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+    .label { color: #64748B; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
+    .value { color: #1E293B; font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🔍 Xác Thực Chứng Chỉ Sầu Riêng")
-st.markdown("<p style='color:#94A3B8;'>Nhập Mã lô (Batch ID) để kiểm tra tính xác thực trên Blockchain Cardano.</p>", unsafe_allow_html=True)
+# --- LOGIC XÁC THỰC ---
+params = st.query_params
+batch_id = params.get("id")
 
-# Input
-batch_input = st.text_input("Nhập mã lô hàng...", placeholder="VD: BATCH-001")
-search_btn = st.button("Tra cứu chứng chỉ")
+if not batch_id:
+    batch_id = st.text_input("Nhập Batch ID để demo (VD: BATCH-001):")
 
-if search_btn:
-    if not batch_input:
-        st.warning("Vui lòng nhập mã lô hàng!")
+if batch_id:
+    if batch_id in MOCK_DATABASE:
+        data = MOCK_DATABASE[batch_id]
+        
+        # 1. Header
+        st.markdown(f'<div class="header-box"><h2>LÔ HÀNG: {batch_id}</h2></div>', unsafe_allow_html=True)
+        
+        # 2. Ảnh sản phẩm (MỚI)
+        st.image(data["image_url"], caption=f"Hình ảnh thực tế lô {batch_id}", use_container_width=True)
+        
+        # 3. Status xác thực
+        st.markdown('<div class="status-card">✓ SẢN PHẨM CHÍNH HÃNG - ĐÃ ĐƯỢC CHỨNG NHẬN</div>', unsafe_allow_html=True)
+
+        # 4. Thông tin chi tiết
+        with st.expander("👨‍🌾 Nông dân & Canh tác", expanded=True):
+            st.markdown(f'<div class="info-section"><p class="label">Nông dân</p><p class="value">{data["farmer"]["name"]}</p><p class="label">Mã vùng</p><p class="value">{data["farmer"]["puc"]}</p></div>', unsafe_allow_html=True)
+
+        with st.expander("🏭 Doanh nghiệp & Đóng gói"):
+            st.markdown(f'<div class="info-section"><p class="label">Doanh nghiệp</p><p class="value">{data["enterprise"]["name"]}</p><p class="label">Phương pháp</p><p class="value">{data["enterprise"]["method"]}</p></div>', unsafe_allow_html=True)
+
+        with st.expander("🧪 Kết quả kiểm định"):
+            st.markdown(f'<div class="info-section" style="border-left-color: #DC2626;"><p class="label">Phòng Lab</p><p class="value">{data["lab"]["lab_name"]}</p><p class="label">Kết quả</p><p class="value" style="color:#16A34A;">{data["lab"]["result"]}</p></div>', unsafe_allow_html=True)
+
+        # 5. Blockchain
+        st.markdown("---")
+        st.markdown("### 🔗 Blockchain Verification")
+        st.info(f"ID: {data['blockchain']['id'][:20]}...")
     else:
-        with st.spinner("Đang truy vấn sổ cái Blockchain..."):
-            time.sleep(1.5) # Giả lập delay mạng
-            
-            if batch_input in MOCK_DB:
-                data = MOCK_DB[batch_input]
-                
-                # Hiển thị giao diện kết quả
-                st.markdown(f"""
-                <div class="result-card">
-                    <h3 style="color:#38BDF8;">LÔ HÀNG: {batch_input}</h3>
-                    <p><strong>Nguồn gốc:</strong> {data['origin']}</p>
-                    <p><strong>Cơ quan kiểm định:</strong> {data['lab']}</p>
-                    <p><strong>Kết quả:</strong> <span class="{'badge-success' if 'Đạt' in data['result'] else 'badge-danger'}">{data['result']}</span></p>
-                    <hr style="border-color:#334155;">
-                    <p style="font-size:0.8rem; color:#64748B;"><strong>Blockchain Transaction Hash:</strong><br>{data['hash']}</p>
-                    <p style="font-size:0.8rem; color:#64748B;"><strong>Thời gian ghi nhận:</strong> {data['timestamp']}</p>
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.error("❌ Không tìm thấy thông tin trên Blockchain.")
-
-# Footer demo
-st.markdown("<br><br><p style='text-align:center; color:#475569;'>Powered by Durian Smart Blockchain Node</p>", unsafe_allow_html=True)
+        st.error("❌ Không tìm thấy thông tin lô hàng.")
