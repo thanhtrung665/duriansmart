@@ -52,15 +52,24 @@ st.markdown(f"""
 
     .stApp {{ background-color: #F8FAFC; }}
 
-    /* Sidebar Dark Green Style */
-    [data-testid="stSidebar"] {{ background: #164B31 !important; }}
-    [data-testid="stSidebar"] * {{ color: white !important; }}
-    .sidebar-profile {{ display: flex; align-items: center; gap: 15px; padding: 10px 0 20px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 20px; }}
-    .sidebar-profile img {{ width: 50px; height: 50px; border-radius: 14px; object-fit: cover; border: 2px solid #FACC15; }}
-    .sidebar-profile span {{ font-weight: 700; font-size: 1.1rem; color: white; }}
+    /* Sửa Sidebar: Nền sáng nhẹ, chữ tối để không bị "tàng hình" */
+    [data-testid="stSidebar"] {{ background: #F1F5F9 !important; border-right: 1px solid #E2E8F0; }}
+    [data-testid="stSidebar"] * {{ color: #1E293B !important; }} 
     
-    div[data-testid="stVerticalBlock"] > div.stButton > button {{ background: transparent; color: white; border: none; border-radius: 10px; font-weight: 600; text-align: left; justify-content: flex-start; padding: 10px 15px; width: 100%; transition: all 0.3s; }}
-    div[data-testid="stVerticalBlock"] > div.stButton > button:hover {{ background: rgba(250, 204, 21, 0.2) !important; color: #FACC15 !important; }}
+    /* Nút trong Sidebar: Đổi màu khi hover */
+    div[data-testid="stVerticalBlock"] > div.stButton > button {{ 
+        background: transparent !important; 
+        color: #1E293B !important; 
+        border: none; 
+        border-radius: 10px; 
+        font-weight: 700; 
+        text-align: left; 
+        padding: 10px 15px; 
+    }}
+    div[data-testid="stVerticalBlock"] > div.stButton > button:hover {{ 
+        background: #E2E8F0 !important; 
+        color: #0369A1 !important; 
+    }}
 </style>
 """, unsafe_allow_html=True)
 
