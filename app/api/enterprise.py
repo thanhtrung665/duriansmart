@@ -28,6 +28,8 @@ class PackagingReportCreate(BaseModel):
     employee_id: str
     employee_name: Optional[str] = None
     processing_date: str
+    quantity_tons: float
+    total_boxes: int
     processing_method: str
 
 class CertRequestCreate(BaseModel):

@@ -1,6 +1,6 @@
 # ============================================================
 # PATH: frontend/enterprise_app.py
-# DURIAN SMART - ENTERPRISE MODULE (TÍCH HỢP API BACKEND & XUẤT QR)
+# DURIAN SMART - ENTERPRISE MODULE (HOÀN THIỆN 100% THIẾT KẾ & API)
 # ============================================================
 import streamlit as st
 import base64
@@ -8,13 +8,13 @@ import os
 import time
 import requests
 
-# Địa chỉ Máy chủ Backend FastAPI
 API_BASE_URL = "https://durian-smart-backend.onrender.com"
 
-st.set_page_config(page_title="Durian Smart | Enterprise", layout="wide")
+# Cấu hình trang mở rộng để form có không gian
+st.set_page_config(page_title="Durian Smart | Enterprise", page_icon="🏭", layout="wide", initial_sidebar_state="expanded")
 
 # ==========================================
-# [ASSETS & STATE SETUP]
+# [ASSETS & STATE SETUP] - QUẢN LÝ 4 FILE ẢNH ĐỘC LẬP
 # ==========================================
 @st.cache_data
 def get_base64_of_bin_file(bin_file):
@@ -25,79 +25,47 @@ def get_base64_of_bin_file(bin_file):
         return f"data:{mime};base64,{b64}"
     except FileNotFoundError: return ""
 
+# 4 File ảnh theo đúng yêu cầu
 LOGO_LINK = get_base64_of_bin_file("frontend/images/logo_durian_smart.png")
 AVATAR_LINK = get_base64_of_bin_file("frontend/images/enterprise.jpg")
-BG_IMAGE = get_base64_of_bin_file("frontend/images/tintuc.jpg")
+NEWS_IMAGE = get_base64_of_bin_file("frontend/images/tintuc.jpg") # Ảnh tin tức riêng
+FORM_BG_IMAGE = get_base64_of_bin_file("frontend/images/bg_garden.jpg") # Ảnh nền vườn sầu riêng chìm
 
-# Database Ảo (Mock State) để hiển thị UI
 if "batches_data" not in st.session_state:
     st.session_state.batches_data = [
-        {"id": "BATCH-001", "puc": "PUC-01", "farmer": "ND-001", "qty": "10 Tấn", "status": "Đang kiểm định", "qr_ready": False},
-        {"id": "BATCH-002", "puc": "PUC-02", "farmer": "ND-002", "qty": "15 Tấn", "status": "Sẵn sàng xuất", "qr_ready": True},
+        {"id": "BATCH-001", "puc": "PUC-01", "farmer": "ND-001", "qty": "10 Tấn", "status": "Sẵn sàng xuất", "qr_ready": True},
+        {"id": "BATCH-002", "puc": "PUC-02", "farmer": "ND-002", "qty": "15 Tấn", "status": "Đang kiểm định", "qr_ready": False},
         {"id": "BATCH-003", "puc": "PUC-03", "farmer": "ND-003", "qty": "10 Tấn", "status": "Đóng gói", "qr_ready": False},
-        {"id": "BATCH-004", "puc": "PUC-01", "farmer": "ND-001", "qty": "8 Tấn", "status": "Bị trả về", "qr_ready": False},
-        {"id": "BATCH-005", "puc": "PUC-04", "farmer": "ND-005", "qty": "12 Tấn", "status": "Bị tiêu hủy", "qr_ready": False}
+        {"id": "BATCH-004", "puc": "PUC-01", "farmer": "ND-001", "qty": "8 Tấn", "status": "Bị trả về", "qr_ready": False}
     ]
-
 if "page" not in st.session_state: st.session_state.page = "dashboard"
 if "selected_qr_batch" not in st.session_state: st.session_state.selected_qr_batch = ""
 
 # ==========================================
-# [HỆ THỐNG CSS]
+# [GLOBAL CSS - SIDEBAR & CHUNG]
 # ==========================================
 st.markdown(f"""
 <style>
-    .stApp {{ background-color: #F8FAFC; }}
     header, [data-testid="stHeader"] {{ visibility: hidden; }}
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
     html, body, [class*="css"] {{ font-family: 'Plus Jakarta Sans', sans-serif; }}
 
+    .stApp {{ background-color: #F8FAFC; }}
+
+    /* Sidebar Dark Green Style */
     [data-testid="stSidebar"] {{ background: #164B31 !important; }}
     [data-testid="stSidebar"] * {{ color: white !important; }}
     .sidebar-profile {{ display: flex; align-items: center; gap: 15px; padding: 10px 0 20px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 20px; }}
     .sidebar-profile img {{ width: 50px; height: 50px; border-radius: 14px; object-fit: cover; border: 2px solid #FACC15; }}
+    .sidebar-profile span {{ font-weight: 700; font-size: 1.1rem; color: white; }}
     
-    .top-right-logo {{ position: fixed; top: 15px; right: 30px; display: flex; align-items: center; gap: 12px; z-index: 99999; }}
-    .top-right-logo img {{ width: 45px; height: 45px; border-radius: 50%; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4);}}
-    .top-right-logo span {{ font-weight: 800; color: #164B31; font-size: 1.1rem; line-height: 1.2;}}
-
-    .stat-card {{ background: linear-gradient(135deg, #114B32 0%, #166534 100%); padding: 20px; border-radius: 16px; color: white; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }}
-    .stat-value {{ font-size: 1.8rem; font-weight: 800; margin-top: 5px; color: #FACC15; }}
-
-    .bg-garden {{ position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background-image: url('{BG_IMAGE}'); background-size: cover; background-position: center; opacity: 0.15; filter: blur(5px); pointer-events: none; }}
-    
-    [data-testid="stForm"] {{ background: rgba(22, 75, 49, 0.95); backdrop-filter: blur(12px); border-radius: 24px; padding: 40px 50px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 25px 50px rgba(0,0,0,0.3); margin-top: 20px; }}
-    [data-testid="stForm"] label, [data-testid="stForm"] p {{ color: white !important; font-weight: 600; font-size: 0.95rem; }}
-    [data-testid="stForm"] [data-baseweb="checkbox"] label {{ color: #FACC15 !important; font-style: italic; }}
-    div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {{ border-radius: 50px !important; background: white !important; padding: 2px 15px; border: none !important; }}
-    
-    [data-testid="stFormSubmitButton"] {{ display: flex; justify-content: center; margin-top: 20px; }}
-    [data-testid="stFormSubmitButton"] > button {{ background: #FFFFFF; color: #114B32 !important; font-weight: 800; font-size: 1.1rem; border-radius: 50px; padding: 10px 40px; border: none; box-shadow: 0 8px 20px rgba(0,0,0,0.2); transition: all 0.3s ease; }}
-    [data-testid="stFormSubmitButton"] > button:hover {{ background: #FACC15; transform: translateY(-2px); }}
-    
-    .back-btn > button {{ background: transparent; color: #114B32; font-weight: 800; font-size: 1.2rem; border: none; padding-left: 0; }}
-    .back-btn > button:hover {{ color: #FACC15; background: transparent; }}
-
-    .status-badge {{ padding: 6px 12px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; display: inline-block; text-align: center; width: 100%; }}
-    .badge-ready {{ background: #A3A02C; color: white; }}
-    .badge-inspect {{ background: #FDE047; color: #854D0E; }}
-    .badge-pack {{ background: #FDBA74; color: #9A3412; }}
-    .badge-return {{ background: #EF4444; color: white; }}
-    .badge-destroy {{ background: #7F1D1D; color: white; }}
-    
-    div[data-testid="stButton"] > button[disabled] {{ background-color: #EF4444 !important; color: white !important; border: none !important; opacity: 0.9 !important; border-radius: 50px; font-weight: 800; }}
-    div[data-testid="stButton"] > button:not([disabled]).btn-qr {{ background-color: #A3A02C !important; color: white !important; border: none !important; border-radius: 50px; font-weight: 800; transition: 0.3s; }}
-    div[data-testid="stButton"] > button:not([disabled]).btn-qr:hover {{ background-color: #166534 !important; box-shadow: 0 5px 15px rgba(22,101,52,0.4); transform: scale(1.05); }}
-    
-    .table-header {{ font-weight: 800; color: #164B31; border-bottom: 2px solid #164B31; padding-bottom: 10px; margin-bottom: 15px; font-size: 1rem; text-align: center; }}
-    .table-row {{ align-items: center; border-bottom: 1px solid #E2E8F0; padding: 12px 0; text-align: center; color: #334155; font-weight: 600; }}
+    div[data-testid="stVerticalBlock"] > div.stButton > button {{ background: transparent; color: white; border: none; border-radius: 10px; font-weight: 600; text-align: left; justify-content: flex-start; padding: 10px 15px; width: 100%; transition: all 0.3s; }}
+    div[data-testid="stVerticalBlock"] > div.stButton > button:hover {{ background: rgba(250, 204, 21, 0.2) !important; color: #FACC15 !important; }}
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown(f'<div class="top-right-logo"><img src="{LOGO_LINK}"><span id="logo-text">Durian<br>Smart</span></div>', unsafe_allow_html=True)
-
 # ==========================================
-# [SIDEBAR]
+# [SIDEBAR MENU]
 # ==========================================
 with st.sidebar:
     st.markdown(f'<div class="sidebar-profile"><img src="{AVATAR_LINK}"><span>CTY XNK X</span></div>', unsafe_allow_html=True)
@@ -106,286 +74,349 @@ with st.sidebar:
     if st.button("📦 Báo cáo đóng gói", use_container_width=True): st.session_state.page = "packing"; st.rerun()
     if st.button("🛡️ Yêu cầu kiểm định", use_container_width=True): st.session_state.page = "cert"; st.rerun()
     if st.button("📋 Thông tin lô hàng", use_container_width=True): st.session_state.page = "batches"; st.rerun()
-    st.button("💰 Đối tác thu mua", disabled=True, use_container_width=True)
     st.write("---")
     st.button("⚙️ Cài đặt", disabled=True, use_container_width=True)
     st.button("💬 Góp ý phản hồi", disabled=True, use_container_width=True)
-    st.button("❓ Giúp đỡ", disabled=True, use_container_width=True)
-    st.button("Đăng xuất")
-
+    st.button("Đăng xuất", use_container_width=True)
 
 # ==========================================
 # [ROUTING & PAGES]
 # ==========================================
 
-# --- 1. DASHBOARD ---
+# ------------------------------------------
+# PAGE 1: DASHBOARD
+# ------------------------------------------
 if st.session_state.page == "dashboard":
-    st.title("🏭 Tổng quan Doanh nghiệp Xuất khẩu")
+    st.markdown("""
+    <style>
+        .stat-card { background: #88B096; padding: 20px; border-radius: 12px; color: white; text-align: center; height: 120px; display: flex; flex-direction: column; justify-content: center;}
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: #FDE047; margin-top: 5px; }
+        .top-right-logo { position: fixed; top: 15px; right: 30px; display: flex; align-items: center; gap: 12px; z-index: 99999; }
+        .top-right-logo img { width: 45px; height: 45px; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.1);}
+        .top-right-logo span { font-weight: 800; color: #64748B; font-size: 1rem; line-height: 1.2;}
+        .shortcut-card { background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown(f'<div class="top-right-logo"><img src="{LOGO_LINK}"><span>Durian<br>Smart</span></div>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:#64748B; font-weight:800; display:flex; align-items:center; gap:15px;">🏭 Tổng quan Doanh nghiệp Xuất khẩu</h2>', unsafe_allow_html=True)
+    
     c1, c2, c3, c4 = st.columns(4)
     c1.markdown('<div class="stat-card">Sản lượng thu mua<div class="stat-value">423.5 Tấn</div></div>', unsafe_allow_html=True)
     c2.markdown('<div class="stat-card">Số Lô Xuất Khẩu<div class="stat-value">200 Lô</div></div>', unsafe_allow_html=True)
     c3.markdown('<div class="stat-card">Tổng Doanh Thu<div class="stat-value">$ 51.250</div></div>', unsafe_allow_html=True)
-    c4.markdown('<div class="stat-card">Số Lô Chờ Kiểm Định<div class="stat-value">50 Lô</div></div>', unsafe_allow_html=True)
+    c4.markdown('<div class="stat-card">Lô Chờ Kiểm Định<div class="stat-value">50 Lô</div></div>', unsafe_allow_html=True)
 
     st.write("---")
-    g1, g2 = st.columns([2, 1])
+    g1, g2 = st.columns([2.5, 1])
     with g1:
-        st.subheader("Sản lượng thu mua và xuất khẩu (Tấn)")
-        st.bar_chart({"Thu mua": [78, 60, 45, 30], "Xuất khẩu": [65, 50, 35, 25]})
+        st.markdown('<h4 style="color:#64748B;">Sản lượng thu mua và xuất khẩu (Tấn)</h4>', unsafe_allow_html=True)
+        st.bar_chart({"Thu mua": [140, 110, 80, 55], "Xuất khẩu": [65, 50, 35, 25]}, color=["#75A68F", "#93C5FD"])
     with g2:
-        st.subheader("Lối tắt chức năng")
+        st.markdown('<h4 style="color:#64748B;">Lối tắt chức năng</h4>', unsafe_allow_html=True)
         if st.button("📦 Gửi Báo Cáo Đóng Gói", use_container_width=True): st.session_state.page = "packing"; st.rerun()
+        st.write("")
         if st.button("🛡️ Gửi Yêu Cầu Kiểm Định", use_container_width=True): st.session_state.page = "cert"; st.rerun()
+        st.write("")
         if st.button("📋 Truy xuất Dữ liệu Lô hàng", use_container_width=True): st.session_state.page = "batches"; st.rerun()
 
+    st.markdown("""<script>
+        const buttons = window.parent.document.querySelectorAll('div[data-testid="column"] button');
+        buttons.forEach(btn => {
+            btn.style.backgroundColor = 'white'; btn.style.color = '#64748B'; 
+            btn.style.border = '1px solid #E2E8F0'; btn.style.borderRadius = '8px';
+            btn.style.padding = '15px'; btn.style.fontWeight = '600';
+        });
+    </script>""", unsafe_allow_html=True)
 
-# --- 2. BÁO CÁO XỬ LÝ VÀ ĐÓNG GÓI ---
+# ------------------------------------------
+# COMMON CSS CHO CÁC TRANG FORM CÓ ẢNH NỀN CHÌM
+# ------------------------------------------
+FORM_PAGES_CSS = f"""
+<style>
+    /* Ẩn Sidebar hoàn toàn */
+    [data-testid="stSidebar"] {{ display: none !important; }}
+    [data-testid="collapsedControl"] {{ display: none !important; }}
+    
+    /* Ảnh nền chìm bg_garden.jpg */
+    .stApp {{
+        background-image: url('{FORM_BG_IMAGE}');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }}
+    .stApp::before {{
+        content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(6px); z-index: 0;
+    }}
+    .main {{ z-index: 1; }}
+
+    /* Khối Form Căn Giữa */
+    [data-testid="stForm"] {{ 
+        background: #1F4E38 !important; border-radius: 20px !important; 
+        padding: 40px !important; border: none !important; box-shadow: 0 25px 50px rgba(0,0,0,0.5) !important; 
+    }}
+    [data-testid="stForm"] label p {{ color: white !important; font-weight: 600; font-size: 0.95rem; }}
+    [data-testid="stForm"] [data-baseweb="checkbox"] label {{ color: white !important; }}
+    
+    /* Ô Input nền trắng */
+    div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {{ 
+        background: white !important; border-radius: 8px !important; border: none !important; 
+    }}
+    input, select {{ color: #1F4E38 !important; font-weight: 600 !important; }}
+    
+    /* Nút Submit */
+    [data-testid="stFormSubmitButton"] {{ display: flex; justify-content: center; margin-top: 20px; }}
+    [data-testid="stFormSubmitButton"] > button {{ 
+        background: white !important; color: #1F4E38 !important; font-weight: 800; font-size: 1.1rem; 
+        border-radius: 50px; padding: 10px 40px; border: none; transition: all 0.3s ease; 
+    }}
+    [data-testid="stFormSubmitButton"] > button:hover {{ background: #FACC15 !important; transform: translateY(-2px); }}
+    
+    /* Nút Quay Lại */
+    .btn-back-yellow > button {{ background: transparent !important; color: #FACC15 !important; font-size: 2.5rem !important; font-weight: 900 !important; border: none !important; padding: 0 !important; }}
+    .btn-back-yellow > button:hover {{ color: white !important; }}
+</style>
+"""
+
+# ------------------------------------------
+# PAGE 2: BÁO CÁO XỬ LÝ VÀ ĐÓNG GÓI
+# ------------------------------------------
 elif st.session_state.page == "packing":
-    st.markdown('<style>.stApp { background-color: #164B31 !important; } #logo-text{color: white !important;}</style>', unsafe_allow_html=True)
-    st.markdown('<div class="bg-garden"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="back-btn">', unsafe_allow_html=True)
-    if st.button("⬅️ Quay lại", key="b_pack"): st.session_state.page = "dashboard"; st.rerun()
+    st.markdown(FORM_PAGES_CSS, unsafe_allow_html=True)
+    
+    st.markdown('<div class="btn-back-yellow">', unsafe_allow_html=True)
+    if st.button("↩", key="back_from_packing"): st.session_state.page = "dashboard"; st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
     
-    st.markdown("""<div style="text-align:center; margin-bottom: 20px;"><img src="https://cdn-icons-png.flaticon.com/512/8649/8649595.png" width="60"><h2 style="color:white; font-weight:800; text-transform:uppercase;">Báo cáo xử lý và đóng gói</h2></div>""", unsafe_allow_html=True)
+    _, col_form, _ = st.columns([1, 8, 1])
+    
+    with col_form:
+        st.markdown(f"""
+        <div style="text-align:center; margin-bottom: 20px; margin-top: -40px;">
+            <img src="{LOGO_LINK}" width="50"><br>
+            <span style="color:white; font-weight:800;">Durian Smart</span>
+            <h2 style="color:white; font-weight:800; text-transform:uppercase; margin-top:10px;">Báo cáo xử lý và đóng gói</h2>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with st.form("packing_report_form", clear_on_submit=False):
-        r1c1, r1c2, r1c3 = st.columns(3)
-        with r1c1: ent_name = st.text_input("Tên Doanh Nghiệp (PHC)*", placeholder="CTY XNK X")
-        with r1c2: fac_code = st.text_input("Mã Cơ Sở Đóng Gói (PHC)*")
-        with r1c3: batch_id = st.text_input("Mã Lô Sầu Riêng*")
-
-        r2c1, r2c2, r2c3 = st.columns(3)
-        with r2c1: emp_id = st.text_input("Mã Nhân viên báo cáo*")
-        with r2c2: emp_name = st.text_input("Họ & Tên Nhân Viên")
-        with r2c3: proc_date = st.date_input("Ngày xử lý, đóng gói*")
-
-        r3c1, r3c2 = st.columns([2, 1])
-        with r3c1: method = st.text_input("Phương pháp xử lý, đóng gói*")
-        with r3c2: uploaded_file = st.file_uploader("File Báo Cáo Đóng Gói", type=["pdf", "jpg"])
+        with st.form("packing_form", clear_on_submit=False):
+            f_col_left, f_col_right = st.columns([2, 1])
             
-        st.write("") 
-        agreement = st.checkbox("Tôi xin cam đoan tất cả thông tin trên là đúng sự thật.")
-        
-        if st.form_submit_button("Cập nhật báo cáo"):
-            if not batch_id or not agreement:
-                st.error("⚠️ Vui lòng điền mã lô và cam đoan.")
-            else:
-                with st.spinner("Đang gọi API và ghi băm báo cáo lên Smart Contract..."):
-                    # Đóng gói dữ liệu gửi API
-                    payload = {
-                        "enterprise_name": ent_name,
-                        "facility_code": fac_code,
-                        "batch_id": batch_id,
-                        "employee_id": emp_id,
-                        "employee_name": emp_name,
-                        "processing_date": str(proc_date),
-                        "processing_method": method
-                    }
-                    try:
-                        # Bắn API POST xuống FastAPI Backend
-                        response = requests.post(f"{API_BASE_URL}/enterprise/{batch_id}/packaging-report", json=payload)
-                        if response.status_code == 200:
-                            data = response.json()
-                            st.success(f"🎉 {data['message']}")
-                            st.info(f"🔗 Enterprise Hash (Chuẩn JSON): {data.get('enterprise_hash')}")
-                            # Cập nhật Local UI State để thấy hiệu ứng ngay
-                            for b in st.session_state.batches_data:
-                                if b["id"] == batch_id: b["status"] = "Đóng gói"
-                        else:
-                            st.error(f"⚠️ Lỗi từ hệ thống: {response.json().get('detail', 'Lỗi không xác định')}")
-                    except requests.exceptions.ConnectionError:
-                        st.error("🔌 Không thể kết nối đến Máy chủ Backend. Vui lòng kiểm tra Uvicorn!")
+            with f_col_left:
+                r1c1, r1c2, r1c3 = st.columns(3)
+                with r1c1: ent_name = st.text_input("Tên Doanh Nghiệp (PHC)*", value="CTY XNK X")
+                with r1c2: fac_code = st.text_input("Mã Cơ Sở (PHC)*")
+                with r1c3: b_id = st.text_input("Mã Lô Sầu Riêng*")
 
+                r2c1, r2c2, r2c3 = st.columns(3)
+                with r2c1: emp_id = st.text_input("Mã Nhân viên*")
+                with r2c2: emp_name = st.text_input("Họ & Tên NV")
+                with r2c3: p_date = st.date_input("Ngày xử lý*")
+                
+                r3c1, r3c2 = st.columns(2)
+                with r3c1: qty = st.number_input("Số lượng (Tấn)*", min_value=0.0, step=0.1)
+                with r3c2: boxes = st.number_input("Số thùng đóng gói*", min_value=0, step=1)
+                
+                method = st.text_input("Phương pháp xử lý, đóng gói*")
 
-# --- 3. YÊU CẦU KIỂM ĐỊNH CẤP CHỨNG CHỈ ---
+            with f_col_right:
+                st.markdown('<p style="color:white; font-weight:600; font-size:0.95rem; margin-bottom: 5px;">File Báo Cáo Đóng Gói</p>', unsafe_allow_html=True)
+                uploaded_file = st.file_uploader("Kéo thả file vào đây (PDF, JPG)", label_visibility="collapsed")
+                st.markdown('<div style="height:115px;"></div>', unsafe_allow_html=True)
+
+            st.write("")
+            agreement = st.checkbox("Tôi xin cam đoan tất cả thông tin trên là đúng sự thật dựa trên báo cáo chính thức.")
+            
+            if st.form_submit_button("Cập nhật báo cáo"):
+                if not b_id or not agreement or qty <= 0: 
+                    st.error("⚠️ Vui lòng điền đủ mã lô, số lượng và tích chọn cam đoan.")
+                else:
+                    with st.spinner("Đang gọi API và ghi băm báo cáo lên Smart Contract..."):
+                        payload = {
+                            "enterprise_name": ent_name, "facility_code": fac_code, "batch_id": b_id,
+                            "employee_id": emp_id, "employee_name": emp_name, "processing_date": str(p_date),
+                            "quantity_tons": qty, "total_boxes": boxes, "processing_method": method
+                        }
+                        try:
+                            res = requests.post(f"{API_BASE_URL}/enterprise/{b_id}/packaging-report", json=payload)
+                            if res.status_code == 200: 
+                                st.success("🎉 Đã cập nhật thành công!")
+                                for b in st.session_state.batches_data:
+                                    if b["id"] == b_id: 
+                                        b["status"] = "Đóng gói"
+                                        b["qty"] = f"{qty} Tấn"
+                            else: 
+                                st.error(f"Lỗi: {res.json().get('detail')}")
+                        except: 
+                            st.error("🔌 Lỗi kết nối Backend.")
+
+# ------------------------------------------
+# PAGE 3: YÊU CẦU KIỂM ĐỊNH (CERT REQUEST - ĐỒNG BỘ LAYOUT 2 CỘT)
+# ------------------------------------------
 elif st.session_state.page == "cert":
-    st.markdown('<style>.stApp { background-color: #164B31 !important; } #logo-text{color: white !important;}</style>', unsafe_allow_html=True)
-    st.markdown('<div class="bg-garden"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="back-btn">', unsafe_allow_html=True)
-    if st.button("⬅️ Quay lại", key="b_cert"): st.session_state.page = "dashboard"; st.rerun()
+    st.markdown(FORM_PAGES_CSS, unsafe_allow_html=True)
+    
+    st.markdown('<div class="btn-back-yellow">', unsafe_allow_html=True)
+    if st.button("↩", key="back_from_cert"): st.session_state.page = "dashboard"; st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
     
-    st.markdown("""<div style="text-align:center; margin-bottom: 20px;"><img src="https://cdn-icons-png.flaticon.com/512/8649/8649595.png" width="60"><h2 style="color:white; font-weight:800; text-transform:uppercase;">Yêu cầu kiểm định & Cấp chứng chỉ số</h2></div>""", unsafe_allow_html=True)
+    _, col_form, _ = st.columns([1, 8, 1])
+    
+    with col_form:
+        st.markdown(f"""
+        <div style="text-align:center; margin-bottom: 20px; margin-top: -40px;">
+            <img src="{LOGO_LINK}" width="50"><br>
+            <span style="color:white; font-weight:800;">Durian Smart</span>
+            <h2 style="color:white; font-weight:800; text-transform:uppercase; margin-top:10px;">Yêu cầu kiểm định & Cấp chứng chỉ số</h2>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with st.form("cert_request_form", clear_on_submit=False):
-        r1c1, r1c2, r1c3 = st.columns(3)
-        with r1c1: ent_name_req = st.text_input("Tên Doanh Nghiệp (PHC)*", placeholder="CTY XNK X", key="cert_ent")
-        with r1c2: fac_code_req = st.text_input("Mã Cơ Sở Đóng Gói (PHC)*", key="cert_fac")
-        with r1c3: lab_code = st.text_input("Mã Cơ Quan Kiểm Định*", placeholder="VD: LAB-GACC-HCM")
+        with st.form("cert_request_form", clear_on_submit=False):
+            # Layout 2 cột chuẩn thiết kế
+            c_left, c_right = st.columns([2, 1])
+            
+            with c_left:
+                r1c1, r1c2, r1c3 = st.columns(3)
+                with r1c1: ent_req = st.text_input("Tên Doanh Nghiệp (PHC)*", value="CTY XNK X")
+                with r1c2: fac_req = st.text_input("Mã Cơ Sở (PHC)*")
+                with r1c3: lab_code = st.text_input("Cơ Quan Kiểm Định*", placeholder="LAB-GACC-HCM")
 
-        r2c1, r2c2, r2c3 = st.columns(3)
-        with r2c1: req_batch = st.text_input("Mã Lô Sầu Riêng*", key="cert_batch")
-        with r2c2: puc_code = st.text_input("Mã Vùng (PUC)*")
-        with r2c3: variety = st.selectbox("Giống Sầu Riêng*", ["Ri6", "Monthong"])
+                r2c1, r2c2, r2c3 = st.columns(3)
+                with r2c1: req_batch = st.text_input("Mã Lô Sầu Riêng*")
+                with r2c2: puc_code = st.text_input("Mã Vùng (PUC)*")
+                with r2c3: variety = st.selectbox("Giống Sầu Riêng*", ["Ri6", "Monthong"])
 
-        r3c1, r3c2, _ = st.columns(3)
-        with r3c1: sample_date = st.date_input("Ngày gửi mẫu*")
-        with r3c2: category = st.selectbox("Danh mục kiểm định*", ["Kiểm dịch thực vật & Dư lượng thuốc BVTV"])
+                r3c1, r3c2, r3c3 = st.columns(3)
+                with r3c1: s_date = st.date_input("Ngày gửi mẫu*")
+                with r3c2: s_qty = st.number_input("Số lượng mẫu (kg)*", min_value=0.0, step=0.1)
+                with r3c3: category = st.selectbox("Danh mục*", ["Kiểm dịch thực vật & Dư lượng BVTV"])
 
-        st.write("") 
-        agreement = st.checkbox("Tôi đồng ý chia sẻ dữ liệu về Lô hàng phục vụ quá trình kiểm định")
-        
-        if st.form_submit_button("Nộp yêu cầu"):
-            if not req_batch or not agreement:
-                st.error("⚠️ Vui lòng điền mã lô và cam đoan.")
-            else:
-                with st.spinner("Đang chuyển tiếp yêu cầu API đến Cơ quan kiểm định..."):
-                    payload = {
-                        "enterprise_name": ent_name_req,
-                        "facility_code": fac_code_req,
-                        "lab_code": lab_code,
-                        "batch_id": req_batch,
-                        "puc_code": puc_code,
-                        "variety": variety,
-                        "sample_date": str(sample_date),
-                        "test_category": category
-                    }
-                    try:
-                        response = requests.post(f"{API_BASE_URL}/enterprise/{req_batch}/cert-request", json=payload)
-                        if response.status_code == 200:
-                            data = response.json()
-                            st.success(f"🎉 {data['message']}")
-                            for b in st.session_state.batches_data:
-                                if b["id"] == req_batch: b["status"] = "Đang kiểm định"
-                        else:
-                            st.error(f"⚠️ Lỗi: {response.json().get('detail', 'Lỗi không xác định')}")
-                    except requests.exceptions.ConnectionError:
-                        st.error("🔌 Lỗi kết nối Backend. Vui lòng đảm bảo server Uvicorn đang chạy.")
+            with c_right:
+                st.markdown('<p style="color:white; font-weight:600; margin-bottom:5px;">Chứng từ / Biên bản gửi mẫu</p>', unsafe_allow_html=True)
+                st.file_uploader("Upload biên bản (PDF, JPG)", label_visibility="collapsed", key="file_cert")
+                st.markdown('<div style="height:115px;"></div>', unsafe_allow_html=True) 
 
+            st.write("") 
+            agreement = st.checkbox("Tôi đồng ý chia sẻ dữ liệu về Lô hàng phục vụ quá trình kiểm định, cấp chứng chỉ số.")
+            
+            if st.form_submit_button("Nộp yêu cầu"):
+                if not req_batch or not agreement: st.error("⚠️ Vui lòng điền mã lô và cam đoan.")
+                else:
+                    with st.spinner("Đang chuyển tiếp yêu cầu API đến Cơ quan kiểm định..."):
+                        payload = {
+                            "enterprise_name": ent_req, "facility_code": fac_req, "lab_code": lab_code,
+                            "batch_id": req_batch, "puc_code": puc_code, "variety": variety,
+                            "sample_date": str(s_date), "test_category": category
+                        }
+                        try:
+                            response = requests.post(f"{API_BASE_URL}/enterprise/{req_batch}/cert-request", json=payload)
+                            if response.status_code == 200:
+                                st.success("🎉 Gửi yêu cầu thành công!"); time.sleep(1)
+                                for b in st.session_state.batches_data:
+                                    if b["id"] == req_batch: b["status"] = "Đang kiểm định"
+                                st.session_state.page = "dashboard"; st.rerun()
+                            else: st.error(f"⚠️ Lỗi: {response.json().get('detail')}")
+                        except: st.error("🔌 Lỗi kết nối Backend.")
 
-# --- 4. THÔNG TIN LÔ HÀNG ---
+# ------------------------------------------
+# PAGE 4: THÔNG TIN LÔ HÀNG (FULL BATCHES)
+# ------------------------------------------
 elif st.session_state.page == "batches":
-    st.markdown('<div class="back-btn">', unsafe_allow_html=True)
-    if st.button("⬅️ Quay lại", key="b_batch"): st.session_state.page = "dashboard"; st.rerun()
+    st.markdown("""
+    <style>
+        .table-header { font-weight: 800; color: #164B31; border-bottom: 2px solid #164B31; padding-bottom: 10px; margin-bottom: 15px; font-size: 1rem; text-align: center; }
+        .table-row { align-items: center; border-bottom: 1px solid #E2E8F0; padding: 12px 0; text-align: center; color: #334155; font-weight: 600; }
+        .status-badge { padding: 6px 12px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; display: inline-block; text-align: center; width: 100%; }
+        .badge-ready { background: #A3A02C; color: white; }
+        .badge-inspect { background: #FDE047; color: #854D0E; }
+        .badge-pack { background: #FDBA74; color: #9A3412; }
+        .badge-return { background: #EF4444; color: white; }
+        
+        /* CSS tuỳ chỉnh cho nút Xuất mã (Xanh lá, chữ trắng) khi đạt chuẩn */
+        div[data-testid="stButton"] > button[kind="primary"] {
+            background-color: #16A34A !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 50px !important;
+            font-weight: 800 !important;
+            transition: all 0.3s ease !important;
+        }
+        div[data-testid="stButton"] > button[kind="primary"]:hover {
+            background-color: #15803D !important;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(22, 163, 74, 0.4) !important;
+        }
+        /* CSS cho nút vô hiệu hoá */
+        div[data-testid="stButton"] > button[kind="secondary"][disabled] {
+            background-color: #E2E8F0 !important;
+            color: #94A3B8 !important;
+            border: none !important;
+            border-radius: 50px !important;
+            font-weight: 700 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="btn-back-yellow" style="margin-bottom: -15px;">', unsafe_allow_html=True)
+    if st.button("↩", key="back_from_batches"): st.session_state.page = "dashboard"; st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<h2 style="color:#164B31; font-weight:800; text-transform:uppercase; margin-bottom: 20px; text-align: center;">Dữ liệu lô hàng thu mua và xuất khẩu</h2>', unsafe_allow_html=True)
     
-    st.markdown('<h2 style="color:#164B31; font-weight:800; text-transform:uppercase; margin-bottom: 20px;">Dữ liệu lô hàng thu mua và xuất khẩu</h2>', unsafe_allow_html=True)
-    
-    st.markdown('<div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">', unsafe_allow_html=True)
+    # Render các cột Header không bọc div thừa
     h_cols = st.columns([1.2, 1, 1, 1, 1.2, 1.5, 1.2])
     headers = ["Mã Lô hàng", "Mã vùng(PUC)", "Mã Nông dân", "Sản lượng", "Nhật ký canh tác", "Trạng thái", "Xuất QR-Code"]
     for i, col in enumerate(h_cols):
         col.markdown(f'<div class="table-header">{headers[i]}</div>', unsafe_allow_html=True)
     
+    # Render dữ liệu các Lô hàng
     for i, batch in enumerate(st.session_state.batches_data):
         cols = st.columns([1.2, 1, 1, 1, 1.2, 1.5, 1.2])
         cols[0].markdown(f'<div class="table-row">{batch["id"]}</div>', unsafe_allow_html=True)
         cols[1].markdown(f'<div class="table-row">{batch["puc"]}</div>', unsafe_allow_html=True)
         cols[2].markdown(f'<div class="table-row">{batch["farmer"]}</div>', unsafe_allow_html=True)
         cols[3].markdown(f'<div class="table-row">{batch["qty"]}</div>', unsafe_allow_html=True)
-        cols[4].markdown(f'<div class="table-row" style="color:#164B31; cursor:pointer;">Truy cập</div>', unsafe_allow_html=True)
+        cols[4].markdown(f'<div class="table-row" style="color:#164B31; font-weight:700;">Truy cập</div>', unsafe_allow_html=True)
         
         status = batch["status"]
-        if status == "Sẵn sàng xuất": css_class = "badge-ready"
-        elif status == "Đang kiểm định": css_class = "badge-inspect"
-        elif status == "Đóng gói": css_class = "badge-pack"
-        elif status == "Bị trả về": css_class = "badge-return"
-        else: css_class = "badge-destroy"
-        
-        cols[5].markdown(f'<div class="table-row"><span class="status-badge {css_class}">{status}</span></div>', unsafe_allow_html=True)
+        color = "#A3A02C" if status == "Sẵn sàng xuất" else "#FEF08A" if status == "Đang kiểm định" else "#FDBA74"
+        font_col = "white" if status == "Sẵn sàng xuất" else "#854D0E"
+        cols[5].markdown(f'<div style="text-align:center; padding:8px 0;"><span style="background:{color}; padding:5px 12px; border-radius:50px; color:{font_col}; font-weight:700; font-size:0.8rem;">{status}</span></div>', unsafe_allow_html=True)
         
         with cols[6]:
-            if batch["qr_ready"] or status == "Sẵn sàng xuất":
-                st.markdown('<div class="btn-qr">', unsafe_allow_html=True)
-                if st.button("Xuất mã", key=f"qr_on_{i}", use_container_width=True):
+            if status == "Sẵn sàng xuất":
+                if st.button("Xuất mã", key=f"qr_{i}", type="primary", use_container_width=True):
                     with st.spinner("Đang gọi Smart Contract và đúc NFT Blockchain..."):
                         try:
-                            # Kích hoạt On-chain API (Single-Signature)
                             res = requests.post(f"{API_BASE_URL}/enterprise/{batch['id']}/mint-export-qr")
                             if res.status_code == 200:
                                 st.session_state.selected_qr_batch = batch['id']
                                 st.session_state.page = "qr_view"
-                                st.rerun()
-                            else:
-                                st.error(f"⚠️ Lỗi Blockchain: {res.json().get('detail')}")
-                        except Exception as e:
-                            st.error("🔌 Lỗi kết nối Backend Uvicorn.")
-                st.markdown('</div>', unsafe_allow_html=True)
-            else:
-                st.button("Xuất mã", key=f"qr_off_{i}", disabled=True, use_container_width=True)
-                
-    st.markdown('</div>', unsafe_allow_html=True)
+                                st.rerun() # Tự động nhảy sang trang QR
+                            else: 
+                                st.error("⚠️ Lỗi gọi Blockchain.")
+                        except: 
+                            st.error("🔌 Lỗi kết nối Backend.")
+            else: 
+                st.button("Đợi xử lý", disabled=True, key=f"d_{i}", type="secondary", use_container_width=True)
 
-
-# --- 5. GIAO DIỆN XUẤT QR CODE (SEED-TO-SACK) ---
+# ------------------------------------------
+# PAGE 5: GIAO DIỆN XUẤT QR CODE
+# ------------------------------------------
 elif st.session_state.page == "qr_view":
-    batch_id = st.session_state.selected_qr_batch
+    st.markdown(FORM_PAGES_CSS, unsafe_allow_html=True)
+    st.markdown('<div class="btn-back-yellow">', unsafe_allow_html=True)
+    if st.button("↩", key="back_qr"): st.session_state.page = "batches"; st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
     
-    # CSS Custom cho trang QR
-    st.markdown("""
-    <style>
-        .stApp { background-color: #164B31 !important; }
-        #logo-text { color: white !important; }
-        .back-icon { color: #FACC15 !important; font-size: 2rem; font-weight: 800; border: none; background: transparent;}
-        .back-icon:hover { color: white !important; }
-        
-        .qr-export-btn > button {
-            background-color: white !important;
-            color: #164B31 !important;
-            font-weight: 800;
-            font-size: 1.1rem;
-            padding: 10px 40px;
-            border-radius: 50px;
-            border: none;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            transition: all 0.3s;
-        }
-        .qr-export-btn > button:hover {
-            transform: scale(1.05);
-            background-color: #FACC15 !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<div class="bg-garden"></div>', unsafe_allow_html=True)
-    
-    # Nút Back mũi tên vàng góc trái
-    if st.button("⬅️", key="b_qr_back", type="secondary", use_container_width=False):
-        st.session_state.page = "batches"
-        st.rerun()
-
-    # Layout chính giữa trang
     st.markdown(f"""
-    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; margin-top: -30px;">
-        <div style="text-align: center; margin-bottom: 20px;">
-            <img src="{LOGO_LINK}" width="50" style="margin-bottom: 5px;">
-            <div style="color: white; font-weight: 800; font-size: 1.2rem; line-height: 1.1;">Durian<br>Smart</div>
-        </div>
-        
-        <h2 style="color:white; font-weight:800; font-size: 2rem; text-transform:uppercase; text-align: center; margin-bottom: 40px;">
-            XUẤT MÃ QR-CODE TRUY XUẤT NGUỒN GỐC
-        </h2>
-        
-        <div style="position: relative; width: 350px; height: 350px; display: flex; flex-direction: column; align-items: center;">
-            <div style="background: #FACC15; width: 160px; height: 160px; border-radius: 50%; border: 8px solid white; display: flex; align-items: center; justify-content: center; position: absolute; top: -50px; z-index: 3; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
-                <span style="font-size: 5rem;">🍈</span>
-            </div>
-            
-            <div style="background: #A3A02C; color: white; padding: 5px 30px; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; border-radius: 4px; position: absolute; top: 90px; z-index: 4; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
-                Certified Compliant
-            </div>
-            
-            <div style="background: white; border-radius: 20px; width: 100%; height: 280px; position: absolute; bottom: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.3);">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://duriansmart.vn/verify/{batch_id}" width="180">
-            </div>
+    <div style="display:flex; flex-direction:column; align-items:center; margin-top: 50px;">
+        <h2 style="color:white; font-weight:800;">XUẤT MÃ QR TRUY XUẤT NGUỒN GỐC</h2>
+        <div style="background: white; padding: 40px; border-radius: 20px; text-align: center; margin-top:20px; box-shadow: 0 15px 40px rgba(0,0,0,0.3);">
+            <div style="background: #FACC15; padding: 5px 20px; border-radius: 5px; font-weight:800; font-size:1.1rem; color:#1F4E38; margin-bottom: 20px; text-transform: uppercase;">Certified Compliant</div>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://duriansmart.vn/verify/{st.session_state.selected_qr_batch}">
+            <h3 style="color:#1F4E38; margin-top:20px;">LÔ: {st.session_state.selected_qr_batch}</h3>
         </div>
     </div>
-    <br>
     """, unsafe_allow_html=True)
-    
-    # Nút Xuất và hiển thị JSON
-    st.markdown('<div class="qr-export-btn" style="display:flex; justify-content:center; margin-top: 20px;">', unsafe_allow_html=True)
-    if st.button("Xuất mã QR-CODE"):
-        # Gom toàn bộ dữ liệu Seed-to-Sack vào JSON
-        seed_to_sack_data = {
-            "batch_metadata": { "batch_id": batch_id, "puc_code": "PUC-01", "variety": "Ri6", "yield": "10 Tấn" },
-            "farmer_data": { "name": "Hồ Thanh Trung", "farm_address": "Tiền Giang", "daily_logs": ["Bón phân X", "Tưới nước", "Phun thuốc"] },
-            "enterprise_data": { "name": "CTY XNK X", "facility": "VN-PHC-123", "packing_method": "Rửa ozone, đóng thùng lạnh", "employee": "NV-099" },
-            "lab_data": { "lab_name": "LAB-GACC-HCM", "test_date": "2026-06-01", "result": "Đạt tiêu chuẩn kiểm dịch thực vật", "cert_hash": f"0x{os.urandom(16).hex()}" },
-            "smart_contract": { "network": "Cardano Preprod", "tx_hash": f"0x{os.urandom(16).hex()}", "status": "LOCKED" }
-        }
-        st.toast(f"Đã xuất thành công gói dữ liệu chuẩn GACC cho {batch_id}!")
-        with st.expander("📄 Dữ liệu JSON Seed-to-Sack đính kèm mã QR", expanded=True):
-            st.json(seed_to_sack_data)
-    st.markdown('</div>', unsafe_allow_html=True)
