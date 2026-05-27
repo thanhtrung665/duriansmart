@@ -200,32 +200,33 @@ elif st.session_state.page == "packing":
         """, unsafe_allow_html=True)
 
         with st.form("packing_form", clear_on_submit=False):
+            # Layout chính: 2 cột lớn
             f_col_left, f_col_right = st.columns([2, 1])
             
             with f_col_left:
-                r1c1, r1c2, r1c3 = st.columns(3)
-                with r1c1: ent_name = st.text_input("Tên Doanh Nghiệp (PHC)*", value="CTY XNK X")
-                with r1c2: fac_code = st.text_input("Mã Cơ Sở (PHC)*")
-                with r1c3: b_id = st.text_input("Mã Lô Sầu Riêng*")
+                # Dùng các lệnh st.columns đơn lẻ để tạo các dòng dữ liệu
+                c1, c2, c3 = st.columns(3)
+                with c1: ent_name = st.text_input("Tên Doanh Nghiệp (PHC)*", value="CTY XNK X")
+                with c2: fac_code = st.text_input("Mã Cơ Sở (PHC)*")
+                with c3: b_id = st.text_input("Mã Lô Sầu Riêng*")
 
-                r2c1, r2c2, r2c3 = st.columns(3)
-                with r2c1: emp_id = st.text_input("Mã Nhân viên*")
-                with r2c2: emp_name = st.text_input("Họ & Tên NV")
-                with r2c3: p_date = st.date_input("Ngày xử lý*")
+                c4, c5, c6 = st.columns(3)
+                with c4: emp_id = st.text_input("Mã Nhân viên*")
+                with c5: emp_name = st.text_input("Họ & Tên NV")
+                with c6: p_date = st.date_input("Ngày xử lý*")
                 
-                r3c1, r3c2 = st.columns(2)
-                with r3c1: qty = st.number_input("Số lượng (Tấn)*", min_value=0.0, step=0.1)
-                with r3c2: boxes = st.number_input("Số thùng đóng gói*", min_value=0, step=1)
-                
-                method = st.text_input("Phương pháp xử lý, đóng gói*")
+                c7, c8, c9 = st.columns(3)
+                with c7: qty = st.number_input("Số lượng (Tấn)*", min_value=0.0, step=0.1)
+                with c8: boxes = st.number_input("Số thùng đóng gói*", min_value=0, step=1)
+                with c9: method = st.text_input("Phương pháp xử lý*")
 
             with f_col_right:
                 st.markdown('<p style="color:white; font-weight:600; font-size:0.95rem; margin-bottom: 5px;">File Báo Cáo Đóng Gói</p>', unsafe_allow_html=True)
                 uploaded_file = st.file_uploader("Kéo thả file vào đây (PDF, JPG)", label_visibility="collapsed")
+                # Tạo khoảng trống để đẩy nút Submit xuống dưới cân đối
                 st.markdown('<div style="height:115px;"></div>', unsafe_allow_html=True)
 
-            st.write("")
-            agreement = st.checkbox("Tôi xin cam đoan tất cả thông tin trên là đúng sự thật dựa trên báo cáo chính thức.")
+            agreement = st.checkbox("Tôi xin cam đoan tất cả thông tin trên là đúng sự thật.")
             
             if st.form_submit_button("Cập nhật báo cáo"):
                 if not b_id or not agreement or qty <= 0: 
@@ -233,9 +234,15 @@ elif st.session_state.page == "packing":
                 else:
                     with st.spinner("Đang gọi API và ghi băm báo cáo lên Smart Contract..."):
                         payload = {
-                            "enterprise_name": ent_name, "facility_code": fac_code, "batch_id": b_id,
-                            "employee_id": emp_id, "employee_name": emp_name, "processing_date": str(p_date),
-                            "quantity_tons": qty, "total_boxes": boxes, "processing_method": method
+                            "enterprise_name": ent_name,
+                            "facility_code": fac_code,
+                            "batch_id": b_id,
+                            "employee_id": emp_id,
+                            "employee_name": emp_name,
+                            "processing_date": str(p_date),
+                            "quantity_tons": qty,
+                            "total_boxes": boxes,
+                            "processing_method": method
                         }
                         try:
                             res = requests.post(f"{API_BASE_URL}/enterprise/{b_id}/packaging-report", json=payload)

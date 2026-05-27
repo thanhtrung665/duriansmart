@@ -19,7 +19,13 @@ def get_repo():
 # 1. SCHEMAS (Cấu trúc dữ liệu đầu vào)
 # ==========================================
 class LabCertificateCreate(BaseModel):
+    lab_name: str
+    lab_id: str
+    enterprise_name: str
+    facility_id: str
     batch_id: str
+    variety: str
+    inspected_quantity: float
     test_date: str
     technician_id: str
     cadimi_level: str
