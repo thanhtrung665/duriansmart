@@ -82,53 +82,6 @@ with st.sidebar:
 # ==========================================
 # [ROUTING & PAGES]
 # ==========================================
-
-# ------------------------------------------
-# PAGE 1: DASHBOARD
-# ------------------------------------------
-if st.session_state.page == "dashboard":
-    st.markdown("""
-    <style>
-        .stat-card { background: #88B096; padding: 20px; border-radius: 12px; color: white; text-align: center; height: 120px; display: flex; flex-direction: column; justify-content: center;}
-        .stat-value { font-size: 1.8rem; font-weight: 800; color: #FDE047; margin-top: 5px; }
-        .top-right-logo { position: fixed; top: 15px; right: 30px; display: flex; align-items: center; gap: 12px; z-index: 99999; }
-        .top-right-logo img { width: 45px; height: 45px; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.1);}
-        .top-right-logo span { font-weight: 800; color: #64748B; font-size: 1rem; line-height: 1.2;}
-        .shortcut-card { background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    st.markdown(f'<div class="top-right-logo"><img src="{LOGO_LINK}"><span>Durian<br>Smart</span></div>', unsafe_allow_html=True)
-    st.markdown('<h2 style="color:#64748B; font-weight:800; display:flex; align-items:center; gap:15px;">🏭 Tổng quan Doanh nghiệp Xuất khẩu</h2>', unsafe_allow_html=True)
-    
-    c1, c2, c3, c4 = st.columns(4)
-    c1.markdown('<div class="stat-card">Sản lượng thu mua<div class="stat-value">423.5 Tấn</div></div>', unsafe_allow_html=True)
-    c2.markdown('<div class="stat-card">Số Lô Xuất Khẩu<div class="stat-value">200 Lô</div></div>', unsafe_allow_html=True)
-    c3.markdown('<div class="stat-card">Tổng Doanh Thu<div class="stat-value">$ 51.250</div></div>', unsafe_allow_html=True)
-    c4.markdown('<div class="stat-card">Lô Chờ Kiểm Định<div class="stat-value">50 Lô</div></div>', unsafe_allow_html=True)
-
-    st.write("---")
-    g1, g2 = st.columns([2.5, 1])
-    with g1:
-        st.markdown('<h4 style="color:#64748B;">Sản lượng thu mua và xuất khẩu (Tấn)</h4>', unsafe_allow_html=True)
-        st.bar_chart({"Thu mua": [140, 110, 80, 55], "Xuất khẩu": [65, 50, 35, 25]}, color=["#75A68F", "#93C5FD"])
-    with g2:
-        st.markdown('<h4 style="color:#64748B;">Lối tắt chức năng</h4>', unsafe_allow_html=True)
-        if st.button("📦 Gửi Báo Cáo Đóng Gói", use_container_width=True): st.session_state.page = "packing"; st.rerun()
-        st.write("")
-        if st.button("🛡️ Gửi Yêu Cầu Kiểm Định", use_container_width=True): st.session_state.page = "cert"; st.rerun()
-        st.write("")
-        if st.button("📋 Truy xuất Dữ liệu Lô hàng", use_container_width=True): st.session_state.page = "batches"; st.rerun()
-
-    st.markdown("""<script>
-        const buttons = window.parent.document.querySelectorAll('div[data-testid="column"] button');
-        buttons.forEach(btn => {
-            btn.style.backgroundColor = 'white'; btn.style.color = '#64748B'; 
-            btn.style.border = '1px solid #E2E8F0'; btn.style.borderRadius = '8px';
-            btn.style.padding = '15px'; btn.style.fontWeight = '600';
-        });
-    </script>""", unsafe_allow_html=True)
-
 # ------------------------------------------
 # COMMON CSS CHO CÁC TRANG FORM CÓ ẢNH NỀN CHÌM
 # ------------------------------------------
@@ -178,6 +131,52 @@ FORM_PAGES_CSS = f"""
     .btn-back-yellow > button:hover {{ color: white !important; }}
 </style>
 """
+
+# ------------------------------------------
+# PAGE 1: DASHBOARD
+# ------------------------------------------
+if st.session_state.page == "dashboard":
+    st.markdown("""
+    <style>
+        .stat-card { background: #88B096; padding: 20px; border-radius: 12px; color: white; text-align: center; height: 120px; display: flex; flex-direction: column; justify-content: center;}
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: #FDE047; margin-top: 5px; }
+        .top-right-logo { position: fixed; top: 15px; right: 30px; display: flex; align-items: center; gap: 12px; z-index: 99999; }
+        .top-right-logo img { width: 45px; height: 45px; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.1);}
+        .top-right-logo span { font-weight: 800; color: #64748B; font-size: 1rem; line-height: 1.2;}
+        .shortcut-card { background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown(f'<div class="top-right-logo"><img src="{LOGO_LINK}"><span>Durian<br>Smart</span></div>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:#64748B; font-weight:800; display:flex; align-items:center; gap:15px;">🏭 Tổng quan Doanh nghiệp Xuất khẩu</h2>', unsafe_allow_html=True)
+    
+    c1, c2, c3, c4 = st.columns(4)
+    c1.markdown('<div class="stat-card">Sản lượng thu mua<div class="stat-value">423.5 Tấn</div></div>', unsafe_allow_html=True)
+    c2.markdown('<div class="stat-card">Số Lô Xuất Khẩu<div class="stat-value">200 Lô</div></div>', unsafe_allow_html=True)
+    c3.markdown('<div class="stat-card">Tổng Doanh Thu<div class="stat-value">$ 51.250</div></div>', unsafe_allow_html=True)
+    c4.markdown('<div class="stat-card">Lô Chờ Kiểm Định<div class="stat-value">50 Lô</div></div>', unsafe_allow_html=True)
+
+    st.write("---")
+    g1, g2 = st.columns([2.5, 1])
+    with g1:
+        st.markdown('<h4 style="color:#64748B;">Sản lượng thu mua và xuất khẩu (Tấn)</h4>', unsafe_allow_html=True)
+        st.bar_chart({"Thu mua": [140, 110, 80, 55], "Xuất khẩu": [65, 50, 35, 25]}, color=["#75A68F", "#93C5FD"])
+    with g2:
+        st.markdown('<h4 style="color:#64748B;">Lối tắt chức năng</h4>', unsafe_allow_html=True)
+        if st.button("📦 Gửi Báo Cáo Đóng Gói", use_container_width=True): st.session_state.page = "packing"; st.rerun()
+        st.write("")
+        if st.button("🛡️ Gửi Yêu Cầu Kiểm Định", use_container_width=True): st.session_state.page = "cert"; st.rerun()
+        st.write("")
+        if st.button("📋 Truy xuất Dữ liệu Lô hàng", use_container_width=True): st.session_state.page = "batches"; st.rerun()
+
+    st.markdown("""<script>
+        const buttons = window.parent.document.querySelectorAll('div[data-testid="column"] button');
+        buttons.forEach(btn => {
+            btn.style.backgroundColor = 'white'; btn.style.color = '#64748B'; 
+            btn.style.border = '1px solid #E2E8F0'; btn.style.borderRadius = '8px';
+            btn.style.padding = '15px'; btn.style.fontWeight = '600';
+        });
+    </script>""", unsafe_allow_html=True)
 
 # ------------------------------------------
 # PAGE 2: BÁO CÁO XỬ LÝ VÀ ĐÓNG GÓI

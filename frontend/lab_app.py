@@ -1,6 +1,6 @@
 # ============================================================
 # PATH: frontend/lab_app.py
-# DURIAN SMART - CƠ QUAN KIỂM ĐỊNH (HOÀN THIỆN WEB3 & UI CHUẨN)
+# DURIAN SMART - CƠ QUAN KIỂM ĐỊNH (HOÀN THIỆN WEB3 & BỔ SUNG TRƯỜNG DỮ LIỆU)
 # ============================================================
 import streamlit as st
 import base64
@@ -54,7 +54,7 @@ st.markdown(f"""
 
     .stApp {{ background-color: #F8FAFC; }}
 
-    /* Sidebar Light Style - Chữ màu tối nổi bật trên nền trắng */
+    /* Sidebar Light Style */
     [data-testid="stSidebar"] {{ background: #FFFFFF !important; border-right: 1px solid #E2E8F0; }}
     [data-testid="stSidebar"] * {{ color: #1E293B !important; }} 
     .sidebar-profile {{ display: flex; align-items: center; gap: 15px; padding: 10px 0 20px 0; border-bottom: 1px solid #E2E8F0; margin-bottom: 20px; }}
@@ -121,7 +121,6 @@ if st.session_state.page == "manage":
 
     st.markdown('<div class="page-title">Dữ liệu mẫu kiểm định sinh hóa</div>', unsafe_allow_html=True)
     
-    # Không dùng thẻ div trắng thừa thãi, render trực tiếp columns
     h_cols = st.columns([1, 1.2, 1.2, 1.2, 1, 1.5])
     headers = ["Mã Lô", "Độc tố Cadimi", "Chất Vàng O", "Dư lượng BVTV", "Kết quả", "Trạng thái"]
     for i, col in enumerate(h_cols):
@@ -134,16 +133,13 @@ if st.session_state.page == "manage":
         cols[2].markdown(f'<div class="table-row">{batch["vang_o"]}</div>', unsafe_allow_html=True)
         cols[3].markdown(f'<div class="table-row">{batch["thuoc_bvtv"]}</div>', unsafe_allow_html=True)
         
-        # Format kết quả
         res = batch["result"]
         res_css = "res-pass" if res == "Đạt" else "res-fail" if res == "Không đạt" else "res-wait"
         cols[4].markdown(f'<div class="table-row {res_css}">{res}</div>', unsafe_allow_html=True)
-        
-        # Format trạng thái
         cols[5].markdown(f'<div style="text-align:center; padding: 12px 0;"><span class="status-badge {batch.get("css", "badge-delivery")}">{batch["status"]}</span></div>', unsafe_allow_html=True)
 
 # ------------------------------------------
-# PAGE 2: CẤP CHỨNG NHẬN SỐ (WEB3 DARK MODE STYLE)
+# PAGE 2: CẤP CHỨNG NHẬN SỐ (WEB3 DARK MODE STYLE + FULL TRƯỜNG DỮ LIỆU)
 # ------------------------------------------
 elif st.session_state.page == "cert":
     st.markdown(f"""
@@ -153,7 +149,7 @@ elif st.session_state.page == "cert":
         
         /* Cấu hình ảnh nền chìm & Dark Overlay */
         .stApp {{ background-image: url('{FORM_BG_IMAGE}'); background-size: cover; background-position: center; background-attachment: fixed; }}
-        .stApp::before {{ content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); z-index: 0; }}
+        .stApp::before {{ content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 0; }}
         .main {{ z-index: 1; }}
 
         /* Cấu hình khối Form Web3 */
@@ -192,8 +188,7 @@ elif st.session_state.page == "cert":
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Căn giữa Form
-    _, col_form, _ = st.columns([1.5, 6, 1.5])
+    _, col_form, _ = st.columns([1, 8, 1])
     
     with col_form:
         st.markdown(f"""
@@ -207,17 +202,35 @@ elif st.session_state.page == "cert":
         """, unsafe_allow_html=True)
 
         with st.form("lab_cert_form", clear_on_submit=False):
-            r1c1, r1c2 = st.columns(2)
-            with r1c1: batch_id = st.text_input("Mã Lô Sầu Riêng*")
-            with r1c2: test_date_input = st.date_input("Ngày phân tích*")
-
-            r2c1, r2c2, r2c3 = st.columns(3)
-            with r2c1: val_cadimi = st.text_input("Độc tố Cadimi (mg/kg)*", placeholder="VD: 0.02")
-            with r2c2: val_vango = st.selectbox("Xét nghiệm Vàng O*", ["Không phát hiện", "Phát hiện vết", "Vượt ngưỡng"])
-            with r2c3: val_bvtv = st.selectbox("Dư lượng thuốc BVTV*", ["Đạt chuẩn (< 0.01%)", "Vượt ngưỡng an toàn"])
-
-            final_result = st.selectbox("KẾT LUẬN CHUNG*", ["Đạt", "Không đạt"])
             
+            st.markdown('<h4 style="color: #38BDF8; font-size:1.05rem; margin-top:0; margin-bottom:10px;">I. THÔNG TIN ĐƠN VỊ</h4>', unsafe_allow_html=True)
+            r1c1, r1c2 = st.columns(2)
+            with r1c1: lab_name = st.text_input("Tên Cơ Quan Kiểm Định*", value="Phòng Lab GACC HCM")
+            with r1c2: lab_code = st.text_input("Mã Cơ Quan Kiểm Định*", value="LAB-GACC-HCM")
+
+            r2c1, r2c2 = st.columns(2)
+            with r2c1: ent_name = st.text_input("Tên Doanh Nghiệp*")
+            with r2c2: fac_code = st.text_input("Mã Cơ Sở Đóng Gói Doanh Nghiệp*")
+
+            st.markdown('<h4 style="color: #38BDF8; font-size:1.05rem; margin-top:15px; margin-bottom:10px;">II. THÔNG TIN LÔ HÀNG</h4>', unsafe_allow_html=True)
+            r3c1, r3c2, r3c3 = st.columns(3)
+            with r3c1: batch_id = st.text_input("Mã Lô Sầu Riêng*")
+            with r3c2: variety = st.selectbox("Giống Sầu Riêng*", ["Ri6", "Monthong", "Musang King"])
+            with r3c3: test_qty = st.number_input("Sản Lượng Kiểm Định (Tấn)*", min_value=0.0, step=0.1)
+
+            st.markdown('<h4 style="color: #38BDF8; font-size:1.05rem; margin-top:15px; margin-bottom:10px;">III. CHỈ SỐ SINH HÓA & HỒ SƠ</h4>', unsafe_allow_html=True)
+            r4c1, r4c2, r4c3 = st.columns(3)
+            with r4c1: val_cadimi = st.text_input("Độc tố Cadimi (mg/kg)*", placeholder="VD: 0.02")
+            with r4c2: val_vango = st.selectbox("Xét nghiệm Vàng O*", ["Không phát hiện", "Phát hiện vết", "Vượt ngưỡng"])
+            with r4c3: val_bvtv = st.selectbox("Dư lượng thuốc BVTV*", ["Đạt chuẩn (< 0.01%)", "Vượt ngưỡng an toàn"])
+
+            r5c1, r5c2, r5c3 = st.columns(3)
+            with r5c1: test_date_input = st.date_input("Ngày Phân Tích*")
+            with r5c2: final_result = st.selectbox("KẾT LUẬN CHUNG*", ["Đạt", "Không đạt"])
+            with r5c3: 
+                st.markdown('<p style="color:#94A3B8; font-weight:700; font-size:0.85rem; text-transform:uppercase; margin-bottom:5px;">File Báo Cáo Kiểm Định</p>', unsafe_allow_html=True)
+                report_file = st.file_uploader("Upload", type=["pdf", "png", "jpg"], label_visibility="collapsed")
+
             # Khung Note Web3
             st.markdown("""
             <div style="background: #1E293B; border-radius: 8px; border: 1px solid #334155; padding: 15px; margin-top: 15px; margin-bottom: 20px;">
@@ -231,12 +244,19 @@ elif st.session_state.page == "cert":
             agreement = st.checkbox("Tôi đồng ý cấp chứng nhận và kích hoạt Smart Contract.")
             
             if st.form_submit_button("✧ Phát hành Chứng Chỉ"):
-                if not batch_id or not agreement:
-                    st.error("⚠️ Vui lòng điền đủ Mã lô và xác nhận cấp chứng nhận.")
+                if not batch_id or not ent_name or not agreement:
+                    st.error("⚠️ Vui lòng điền đủ Tên Doanh Nghiệp, Mã lô và xác nhận cấp chứng nhận.")
                 else:
                     with st.spinner("Đang kết nối Cardano Node... Xử lý giao dịch..."):
+                        # Mở rộng Payload gửi về Backend
                         payload = {
+                            "lab_name": lab_name,
+                            "lab_code": lab_code,
+                            "enterprise_name": ent_name,
+                            "facility_code": fac_code,
                             "batch_id": batch_id,
+                            "variety": variety,
+                            "inspected_quantity": test_qty,
                             "test_date": str(test_date_input),
                             "technician_id": "TECH-SYSTEM",
                             "cadimi_level": val_cadimi if val_cadimi else "0.01",
@@ -246,18 +266,16 @@ elif st.session_state.page == "cert":
                         }
                         
                         try:
-                            # Tích hợp gọi API
                             response = requests.post(f"{API_BASE_URL}/lab/{batch_id}/certificate", json=payload)
                             if response.status_code == 200:
                                 data = response.json()
-                                # Kích hoạt State để hiện khối thông báo xanh
                                 st.session_state.mint_success = True
                                 st.session_state.minted_data = {
                                     "batch": batch_id,
                                     "hash": data.get("lab_hash", f"0x{os.urandom(32).hex()}")
                                 }
                                 
-                                # Cập nhật danh sách lô hàng trên UI
+                                # Cập nhật danh sách lô hàng trên UI giả lập
                                 found = False
                                 for b in st.session_state.lab_batches:
                                     if b["id"] == batch_id:
