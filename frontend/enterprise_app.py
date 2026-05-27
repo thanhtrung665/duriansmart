@@ -190,73 +190,49 @@ elif st.session_state.page == "packing":
     
     _, col_form, _ = st.columns([1, 8, 1])
     
-    with col_form:
-        st.markdown(f"""
-        <div style="text-align:center; margin-bottom: 20px; margin-top: -40px;">
-            <img src="{LOGO_LINK}" width="50"><br>
-            <span style="color:white; font-weight:800;">Durian Smart</span>
-            <h2 style="color:white; font-weight:800; text-transform:uppercase; margin-top:10px;">Báo cáo xử lý và đóng gói</h2>
-        </div>
-        """, unsafe_allow_html=True)
-
-        with st.form("packing_form", clear_on_submit=False):
-            # Layout chính: 2 cột lớn
+    with st.form("packing_form", clear_on_submit=False):
             f_col_left, f_col_right = st.columns([2, 1])
             
             with f_col_left:
-                # Dùng các lệnh st.columns đơn lẻ để tạo các dòng dữ liệu
-                c1, c2, c3 = st.columns(3)
-                with c1: ent_name = st.text_input("Tên Doanh Nghiệp (PHC)*", value="CTY XNK X")
-                with c2: fac_code = st.text_input("Mã Cơ Sở (PHC)*")
-                with c3: b_id = st.text_input("Mã Lô Sầu Riêng*")
-
-                c4, c5, c6 = st.columns(3)
-                with c4: emp_id = st.text_input("Mã Nhân viên*")
-                with c5: emp_name = st.text_input("Họ & Tên NV")
-                with c6: p_date = st.date_input("Ngày xử lý*")
+                # Thay vì dùng st.columns(3), ta dùng một container và CSS Grid
+                st.markdown('<div class="grid-container">', unsafe_allow_html=True)
+                ent_name = st.text_input("Tên Doanh Nghiệp (PHC)*", value="CTY XNK X")
+                fac_code = st.text_input("Mã Cơ Sở (PHC)*")
+                b_id = st.text_input("Mã Lô Sầu Riêng*")
                 
-                c7, c8, c9 = st.columns(3)
-                with c7: qty = st.number_input("Số lượng (Tấn)*", min_value=0.0, step=0.1)
-                with c8: boxes = st.number_input("Số thùng đóng gói*", min_value=0, step=1)
-                with c9: method = st.text_input("Phương pháp xử lý*")
+                emp_id = st.text_input("Mã Nhân viên*")
+                emp_name = st.text_input("Họ & Tên NV")
+                p_date = st.date_input("Ngày xử lý*")
+                
+                qty = st.number_input("Số lượng (Tấn)*", min_value=0.0, step=0.1)
+                boxes = st.number_input("Số thùng đóng gói*", min_value=0, step=1)
+                method = st.text_input("Phương pháp xử lý*")
+                st.markdown('</div>', unsafe_allow_html=True)
 
             with f_col_right:
                 st.markdown('<p style="color:white; font-weight:600; font-size:0.95rem; margin-bottom: 5px;">File Báo Cáo Đóng Gói</p>', unsafe_allow_html=True)
-                uploaded_file = st.file_uploader("Kéo thả file vào đây (PDF, JPG)", label_visibility="collapsed")
-                # Tạo khoảng trống để đẩy nút Submit xuống dưới cân đối
+                uploaded_file = st.file_uploader("Upload", label_visibility="collapsed")
                 st.markdown('<div style="height:115px;"></div>', unsafe_allow_html=True)
 
-            agreement = st.checkbox("Tôi xin cam đoan tất cả thông tin trên là đúng sự thật.")
+            agreement = st.checkbox("Tôi xin cam đoan thông tin trên là đúng sự thật.")
             
             if st.form_submit_button("Cập nhật báo cáo"):
+                # Logic xử lý API giữ nguyên
                 if not b_id or not agreement or qty <= 0: 
                     st.error("⚠️ Vui lòng điền đủ mã lô, số lượng và tích chọn cam đoan.")
                 else:
-                    with st.spinner("Đang gọi API và ghi băm báo cáo lên Smart Contract..."):
+                    with st.spinner("Đang gọi API..."):
                         payload = {
-                            "enterprise_name": ent_name,
-                            "facility_code": fac_code,
-                            "batch_id": b_id,
-                            "employee_id": emp_id,
-                            "employee_name": emp_name,
-                            "processing_date": str(p_date),
-                            "quantity_tons": qty,
-                            "total_boxes": boxes,
-                            "processing_method": method
+                            "enterprise_name": ent_name, "facility_code": fac_code, "batch_id": b_id,
+                            "employee_id": emp_id, "employee_name": emp_name, "processing_date": str(p_date),
+                            "quantity_tons": qty, "total_boxes": boxes, "processing_method": method
                         }
                         try:
                             res = requests.post(f"{API_BASE_URL}/enterprise/{b_id}/packaging-report", json=payload)
                             if res.status_code == 200: 
-                                st.success("🎉 Đã cập nhật thành công!")
-                                for b in st.session_state.batches_data:
-                                    if b["id"] == b_id: 
-                                        b["status"] = "Đóng gói"
-                                        b["qty"] = f"{qty} Tấn"
-                            else: 
-                                st.error(f"Lỗi: {res.json().get('detail')}")
-                        except: 
-                            st.error("🔌 Lỗi kết nối Backend.")
-
+                                st.success("🎉 Thành công!"); st.session_state.page = "dashboard"; st.rerun()
+                            else: st.error(f"Lỗi: {res.json().get('detail')}")
+                        except: st.error("🔌 Lỗi kết nối Backend.")
 # ------------------------------------------
 # PAGE 3: YÊU CẦU KIỂM ĐỊNH (CERT REQUEST - ĐỒNG BỘ LAYOUT 2 CỘT)
 # ------------------------------------------
