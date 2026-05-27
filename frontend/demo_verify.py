@@ -1,15 +1,17 @@
 # ============================================================
 # PATH: frontend/verify_app.py
-# DURIAN SMART - PUBLIC QR VERIFICATION MODULE (WITH PRODUCT IMAGE)
+# DURIAN SMART - PUBLIC QR VERIFICATION MODULE (LOCAL IMAGE)
 # ============================================================
 import streamlit as st
+import os
 
 st.set_page_config(page_title="Durian Smart | Xác thực", page_icon="🔍", layout="centered")
 
-# --- MOCK DATABASE (Cập nhật thêm image_url) ---
+# --- MOCK DATABASE ---
+# Lưu ý: Đảm bảo đường dẫn này khớp với cây thư mục của bạn
 MOCK_DATABASE = {
     "BATCH-001": {
-        "image_url": "frontend/images/durian.jpg", # Link ảnh demo
+        "image_path": "frontend/images/durian.jpg", 
         "farmer": {"name": "Nguyễn Văn A", "puc": "PUC-01", "farm": "Vườn sầu riêng Ri6 - Đắk Lắk", "date": "2026-05-15"},
         "enterprise": {"name": "CTY XNK X", "factory": "F-001", "date": "2026-05-20", "method": "Đóng gói chân không"},
         "lab": {"lab_name": "Phòng Lab GACC HCM", "date": "2026-05-25", "cadimi": "0.02 mg/kg", "result": "Đạt"},
@@ -43,8 +45,13 @@ if batch_id:
         # 1. Header
         st.markdown(f'<div class="header-box"><h2>LÔ HÀNG: {batch_id}</h2></div>', unsafe_allow_html=True)
         
-        # 2. Ảnh sản phẩm (MỚI)
-        st.image(data["image_url"], caption=f"Hình ảnh thực tế lô {batch_id}", use_container_width=True)
+        # 2. Xử lý hiển thị ảnh cục bộ
+        img_path = data["image_path"]
+        if os.path.exists(img_path):
+            # ĐÃ XÓA THAM SỐ GÂY LỖI: use_container_width
+            st.image(img_path, caption=f"Hình ảnh thực tế lô {batch_id}")
+        else:
+            st.warning(f"⚠️ Ảnh mẫu chưa tìm thấy tại đường dẫn: {img_path}")
         
         # 3. Status xác thực
         st.markdown('<div class="status-card">✓ SẢN PHẨM CHÍNH HÃNG - ĐÃ ĐƯỢC CHỨNG NHẬN</div>', unsafe_allow_html=True)
