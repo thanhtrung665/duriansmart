@@ -52,9 +52,12 @@ st.markdown(f"""
 
     .stApp {{ background-color: #F8FAFC; }}
 
-    /* Sửa Sidebar: Nền sáng nhẹ, chữ tối để không bị "tàng hình" */
-    [data-testid="stSidebar"] {{ background: #F1F5F9 !important; border-right: 1px solid #E2E8F0; }}
-    [data-testid="stSidebar"] * {{ color: #1E293B !important; }} 
+    /* Sidebar Dark Green Style */
+    [data-testid="stSidebar"] {{ background: #164B31 !important; }}
+    [data-testid="stSidebar"] * {{ color: white !important; }}
+    .sidebar-profile {{ display: flex; align-items: center; gap: 15px; padding: 10px 0 20px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 20px; }}
+    .sidebar-profile img {{ width: 50px; height: 50px; border-radius: 14px; object-fit: cover; border: 2px solid #FACC15; }}
+    .sidebar-profile span {{ font-weight: 700; font-size: 1.1rem; color: white; }}
     
     /* Nút trong Sidebar: Đổi màu khi hover */
     div[data-testid="stVerticalBlock"] > div.stButton > button {{ 
