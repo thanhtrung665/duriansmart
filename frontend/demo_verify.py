@@ -69,7 +69,7 @@ if batch_id:
         # Ảnh sản phẩm
         img_path = data["image_path"]
         if os.path.exists(img_path):
-            st.image(img_path, caption=f"Hình ảnh thực tế lô {batch_id}")
+            st.image(img_path, caption=f"Hình ảnh thực tế lô {batch_id}", width=400)
         
         st.markdown('<div class="status-card">✓ SẢN PHẨM CHÍNH HÃNG - ĐÃ ĐƯỢC CHỨNG NHẬN</div>', unsafe_allow_html=True)
 
