@@ -239,6 +239,7 @@ elif st.session_state.page == "packing":
 elif st.session_state.page == "cert":
     st.markdown(FORM_PAGES_CSS, unsafe_allow_html=True)
     
+    # Nút Back
     st.markdown('<div class="btn-back-yellow">', unsafe_allow_html=True)
     if st.button("↩", key="back_from_cert"): st.session_state.page = "dashboard"; st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
@@ -255,12 +256,8 @@ elif st.session_state.page == "cert":
         """, unsafe_allow_html=True)
 
         with st.form("enterprise_cert_request_form", clear_on_submit=False):
-            
-            # --- CẤU TRÚC PHÂN MỤC GIỐNG LAB ---
-            
             # I. THÔNG TIN ĐƠN VỊ
             st.markdown('<h4 style="color: #38BDF8; font-size:1.05rem; margin-top:0;">I. THÔNG TIN ĐƠN VỊ</h4>', unsafe_allow_html=True)
-            # Dùng grid cho nhóm 3 cột
             st.markdown('<div class="grid-3">', unsafe_allow_html=True)
             lab_target = st.text_input("Gửi đến Cơ quan kiểm định*", value="Phòng Lab GACC HCM")
             lab_code = st.text_input("Mã Cơ Quan Kiểm Định*", value="LAB-GACC-HCM")
@@ -283,8 +280,6 @@ elif st.session_state.page == "cert":
 
             # III. CHI TIẾT & HỒ SƠ
             st.markdown('<h4 style="color: #38BDF8; font-size:1.05rem; margin-top:20px;">III. CHI TIẾT & HỒ SƠ</h4>', unsafe_allow_html=True)
-            
-            # Layout hàng ngang cho ngày tháng và upload file
             c_left, c_right = st.columns([2, 1])
             with c_left:
                 st.markdown('<div class="grid-2">', unsafe_allow_html=True)
@@ -299,12 +294,37 @@ elif st.session_state.page == "cert":
 
             agreement = st.checkbox("Tôi cam đoan thông tin trên là chính xác và đồng ý chia sẻ dữ liệu.")
             
-            # Submit button
-            submit = st.form_submit_button("✧ Nộp Yêu Cầu Kiểm Định")
-            
-            if submit:
-                # Logic gọi API giữ nguyên...
-                st.success("Yêu cầu đã được gửi!")
+            if st.form_submit_button("✧ Nộp Yêu Cầu Kiểm Định"):
+                if not batch_id or not agreement:
+                    st.error("⚠️ Vui lòng điền mã lô và cam đoan.")
+                else:
+                    with st.spinner("Đang chuyển tiếp yêu cầu API đến Cơ quan kiểm định..."):
+                        # Payload tích hợp đầy đủ các trường mới
+                        payload = {
+                            "enterprise_name": ent_name,
+                            "facility_code": fac_code,
+                            "lab_name": lab_target,
+                            "lab_code": lab_code,
+                            "batch_id": batch_id,
+                            "variety": variety,
+                            "inspected_quantity": test_qty,
+                            "sample_date": str(sample_date),
+                            "test_category": category,
+                            "contact_person": contact,
+                            "phone": phone,
+                            "note": note
+                        }
+                        try:
+                            response = requests.post(f"{API_BASE_URL}/enterprise/{batch_id}/cert-request", json=payload)
+                            if response.status_code == 200:
+                                st.success("🎉 Gửi yêu cầu thành công!"); time.sleep(1)
+                                for b in st.session_state.batches_data:
+                                    if b["id"] == batch_id: b["status"] = "Đang kiểm định"
+                                st.session_state.page = "dashboard"; st.rerun()
+                            else:
+                                st.error(f"⚠️ Lỗi: {response.json().get('detail', 'Lỗi không xác định')}")
+                        except:
+                            st.error("🔌 Lỗi kết nối Backend.")
 # ------------------------------------------
 # PAGE 4: THÔNG TIN LÔ HÀNG (FULL BATCHES)
 # ------------------------------------------
