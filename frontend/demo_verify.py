@@ -46,7 +46,7 @@ st.markdown("""
 <style>
     .stApp { background-color: #F8FAFC; }
     .header-box { text-align: center; padding: 20px; background: white; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    .status-card { background: #16A34A; color: white; padding: 15px; border-radius: 12px; text-align: center; font-weight: 800; margin-bottom: 20px; }
+    .status-card { background: #16A34A; color: white; padding: 15px; border-radius: 12px; text-align: center; font-weight: 400; margin-bottom: 20px; }
     .info-section { background: #F1F5F9; padding: 15px; border-radius: 12px; border-left: 5px solid #16A34A; margin-bottom: 10px; }
     .label { color: #64748B; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 2px; }
     .value { color: #1E293B; font-weight: 700; font-size: 0.9rem; margin-bottom: 12px; }
